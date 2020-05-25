@@ -52,10 +52,10 @@ class CovidController {
           const response = await api.get(
             `?state=${state}&date=${dateFormated}`
           );
-          console.log({ ...response.data.results });
-          cases = response.data.results;
+          cases.push(...response.data.results);
         }
       }
+
       sort(cases);
 
       const sorted = cases.slice(0, 10);
@@ -70,7 +70,7 @@ class CovidController {
         sendResults.push(response.data);
       }
 
-      return res.status(200).json({ cases });
+      return res.status(200).json({ cases: sendResults });
     } catch (err) {
       return res.status(502).json({ message: "Erro na requisição" });
     }
