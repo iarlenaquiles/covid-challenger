@@ -26,48 +26,54 @@ convert = (index, data) => {
 
 class CovidController {
   async get(req, res) {
-    const { dateStart, dateEnd, state } = req.query;
+    try {
+      const { dateStart, dateEnd, state } = req.query;
 
-    const start = new Date(dateStart);
-    const end = new Date(dateEnd);
+      const start = new Date(dateStart);
+      const end = new Date(dateEnd);
 
-    const daysBetween = differenceInDays(end, start);
+      const daysBetween = differenceInDays(end, start);
 
-    let cases;
-    const startFormated = FormatDate(dateStart);
+      let cases = [];
+      const startFormated = FormatDate(dateStart);
 
-    let dateAdded = start;
+      let dateAdded = start;
 
-    if (daysBetween === 1) {
-      const response = await api.get(`?state=${state}&date=${startFormated}`);
+      if (daysBetween === 1) {
+        const response = await api.get(`?state=${state}&date=${startFormated}`);
 
-      cases = response.data.results;
-    } else {
-      for (let i = 0; i <= daysBetween; i++) {
-        let addDate = addDays(dateAdded, 1);
-        dateAdded = addDate;
-
-        let dateFormated = format(new Date(dateAdded), "yyyy-MM-dd");
-        const response = await api.get(`?state=${state}&date=${dateFormated}`);
         cases = response.data.results;
+      } else {
+        for (let i = 0; i <= daysBetween; i++) {
+          let addDate = addDays(dateAdded, 1);
+          dateAdded = addDate;
+
+          let dateFormated = format(new Date(dateAdded), "yyyy-MM-dd");
+          const response = await api.get(
+            `?state=${state}&date=${dateFormated}`
+          );
+          console.log({ ...response.data.results });
+          cases = response.data.results;
+        }
       }
+      sort(cases);
+
+      const sorted = cases.slice(0, 10);
+
+      const sendResults = [];
+
+      for (const i in sorted) {
+        const dadosParsed = convert(i, sorted[i]);
+        const response = await apiNuvem.post("testApi", dadosParsed, {
+          headers: { MeuNome: "Iarlen Aquiles" }
+        });
+        sendResults.push(response.data);
+      }
+
+      return res.status(200).json({ cases });
+    } catch (err) {
+      return res.status(502).json({ message: "Erro na requisição" });
     }
-
-    sort(cases);
-
-    const sorted = cases.slice(0, 10);
-
-    const sendResults = [];
-
-    for (const i in sorted) {
-      const dadosParsed = convert(i, sorted[i]);
-      const response = await apiNuvem.post("testApi", dadosParsed, {
-        headers: { MeuNome: "Iarlen Aquiles" }
-      });
-      sendResults.push(response.data);
-    }
-
-    return res.status(200).json({ cases: sendResults });
   }
 }
 
