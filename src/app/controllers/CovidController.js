@@ -16,6 +16,23 @@ sort = cases => {
   });
 };
 
+removeDuplicated = cases => {
+  var reduced = [];
+
+  cases.forEach(item => {
+    var duplicated =
+      reduced.findIndex(redItem => {
+        return item.city == redItem.city;
+      }) > -1;
+
+    if (!duplicated) {
+      reduced.push(item);
+    }
+  });
+
+  return reduced;
+};
+
 convert = (index, data) => {
   return {
     id: index,
@@ -58,12 +75,13 @@ class CovidController {
 
       sort(cases);
 
-      const sorted = cases.slice(0, 10);
+      const unique = removeDuplicated(cases);
+      const sliced = unique.slice(0, 10);
 
       const sendResults = [];
 
-      for (const i in sorted) {
-        const dadosParsed = convert(i, sorted[i]);
+      for (const i in sliced) {
+        const dadosParsed = convert(i, sliced[i]);
         const response = await apiNuvem.post("testApi", dadosParsed, {
           headers: { MeuNome: "Iarlen Aquiles" }
         });
